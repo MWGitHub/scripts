@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+totp() {
+  k=$1
+  s=$2
+  t=$(($(date +%s) / s))
+
+  hotp="$(hotp.sh "$k" "$t")"
+
+  echo -n "$hotp"
+}
+
+step=${2:-30}
+
+totp "$1" "$step" 1>&2

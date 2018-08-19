@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+
+show_help() {
+  printf 'Run by piping the key into the command and specifying the counter as the first argument or through options.\n'
+  printf 'Examples:\n'
+  printf 'echo "pug" | hotp 12345\n'
+  printf 'hotp --key pug --count 0\n'
+}
+
+key=
+count=
+
+while [ $# -gt 0 ]; do
+  case "${1}" in
+    -h|-\?|--help)
+      show_help
+      exit
+      ;;
+
+    -k|--key)
+      key="$2"
+      shift
+      ;;
+
+    -c|--count)
+      count="$2"
+      shift
+      ;;
+
+    --)
+      break
+      ;;
+
+    *)
+      shift
+      ;;
+  esac
+done
+
+to_six() {
+  string=$1
+
+  # Get the offset half byte
+  offset="$((16#$string & 0x00000000000000000000000000000000000000f))"
+  # Retrieve the range of 4 bytes
+  range="${string:$((offset << 1)):$((4 << 1))}"
+  separated="$(echo "$range" | sed -e 's/\(..\)/\1\n/g')"
+  result=0
+  multiplier=3
+  while read -r line; do
+    result="$((result | (16#$line << (multiplier * 8))))"
+    multiplier="$((multiplier-1))"
+  done <<< "$separated"
+
+  printf %s "$((result % 1000000))"
+}
+
+hotp() {
+  k=$1
+  c=$2
+  sha=$(echo -n "$c" | openssl sha1 -hmac "$k" | awk '/.*[[:blank:]]/ { print $2 }' -)
+
+  result=$(to_six "$sha")
+  printf %s "$result"
+}
+
+if [ -z "$key" ]; then
+  key=$(cat)
+fi
+if [ -z "$count" ]; then
+  count="$1"
+fi
+
+hotp "$key" "$count" 1>&2
