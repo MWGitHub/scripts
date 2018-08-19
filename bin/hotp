@@ -58,7 +58,7 @@ to_six() {
 hotp() {
   k=$1
   c=$2
-  sha=$(echo -n "$c" | openssl sha1 -hmac "$k" | awk '/.*[[:blank:]]/ { print $2 }' -)
+  sha=$(printf %d "$c" | openssl sha1 -hmac "$k" | awk '/.*[[:blank:]]/ { print $2 }' -)
 
   result=$(to_six "$sha")
   printf %s "$result"
