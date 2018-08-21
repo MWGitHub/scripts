@@ -3,11 +3,10 @@
 totp() {
   k=$1
   s=$2
-  t=$(($(date +%s) / s))
 
-  hotp="$(hotp.sh "$k" "$t")"
+  result="$(oathtool --base32 --totp -s "$s" "$k")"
 
-  echo -n "$hotp"
+  printf %s "$result"
 }
 
 step=${2:-30}
