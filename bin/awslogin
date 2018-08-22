@@ -38,9 +38,8 @@ login() {
     die 'Error: token must be provided.'
   fi
 
-  role=$(awk '/profile[[:blank:]]admin/,/ENDFILE/' < ~/.aws/config | awk '/role_arn.*=.*(arn)+/ { print $3 }')
-
-  mfa_serial=$(awk '/profile[[:blank:]]admin/,/ENDFILE/' < ~/.aws/config | awk '/mfa_serial.*=.*(arn)+/ { print $3 }')
+  role=$(awk -v prof="profile $profile" '$0~prof,/ENDFILE/' < ~/.aws/config | grep -m 1 role_arn= | cut -d "=" -f 2)
+  mfa_serial=$(awk -v prof="$profile" '$0~prof,/ENDFILE/' < ~/.aws/config | grep -m 1 mfa_serial= | cut -d "=" -f 2)
 
   # Log in to AWS with a role
   result="$(aws sts assume-role --role-arn "$role" --role-session-name "$profile" --duration-seconds 43200 --serial-number "$mfa_serial" --token-code "$token")"
