@@ -29,6 +29,7 @@ fi
 login() {
   profile=$1
   token=$2
+  duration=$3
 
   if [ -z "$profile" ]; then
     die 'Error: profile must be provided.'
@@ -42,7 +43,7 @@ login() {
   mfa_serial=$(awk -v prof="$profile" '$0~prof,/ENDFILE/' < ~/.aws/config | grep -m 1 mfa_serial= | cut -d "=" -f 2)
 
   # Log in to AWS with a role
-  result="$(aws sts assume-role --role-arn "$role" --role-session-name "$profile" --duration-seconds 43200 --serial-number "$mfa_serial" --token-code "$token")"
+  result="$(aws sts assume-role --role-arn "$role" --role-session-name "$profile" --duration-seconds "$duration" --serial-number "$mfa_serial" --token-code "$token")"
 
   success="$(echo "$result" | grep SessionToken)"
   if [ -z "$success" ]; then
@@ -59,4 +60,5 @@ login() {
   echo export AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN"
 }
 
-login "$1" "$2"
+duration=${3:-43200}
+login "$1" "$2" "$duration"
